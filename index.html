@@ -27,17 +27,23 @@ function preload() {
 	game.load.image('ground', 'assets/platform.png');
 	game.load.image('ground_red', 'assets/platform_red.png');
 	game.load.image('ledge', 'assets/platform_r.png');
-	game.load.image('spike', 'assets/spike.png')
+	game.load.image('spike', 'assets/spike.png');
 	game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
+	game.load.image('monster', 'assets/diamond.png');
+	game.load.image('bullet', 'assets/star.png');
 
 }
 
 var platforms;
+var deadly;
+var projectiles;
 var ground = [];
 var clouds = [];
 var spikes = [];
 var ledges = [];
-var ledgesOn = false;
+var bullets = [];
+var monsters = [];
+var ledgesOn = true;
 var spikesOn = false;
 var redGround = false;
 
@@ -70,6 +76,9 @@ function create() {
 	deadly = game.add.group();
 	deadly.enableBody = true;
 
+	projectiles = game.add.group();
+	projectiles.enableBody = true;
+
 	player = game.add.sprite(100, game.world.height - 300, 'dude');
 	player.scale.setTo(1.5, 1.5);
 	game.physics.enable(player);
@@ -83,6 +92,8 @@ function create() {
 
 	keyK = game.input.keyboard.addKey(Phaser.Keyboard.K);
     keyK.onDown.add(switchOnLedges, this);
+    keyD = game.input.keyboard.addKey(Phaser.Keyboard.D);
+    keyD.onDown.add(shootBullet, this);
 
 }
 
@@ -102,6 +113,16 @@ function update() {
 
 	ledges.forEach(function(ledge) {
 		ledge.body.velocity.x = -vel;
+	})
+
+	// Update monsters:
+	monsters.forEach(function(monster_arr) {
+		monster_arr[0].body.position.x = monster_arr[1].body.position.x;
+	})
+
+	//update bullets
+	bullets.forEach(function(bullet) {
+		bullet.body.velocity.x = vel * 2;
 	})
 
 	hitPlatform = game.physics.arcade.collide(player, platforms);
@@ -131,6 +152,12 @@ function update() {
 			spike.body.immovable = true;
 			spike.body.friction.x = 0;
 			spikes.push(spike);
+			//create a monster:
+			new_monster = deadly.create(spike.body.position.x, spike.body.position.y - 50, 'monster');
+			new_monster.scale.setTo(2, 2);
+			new_monster.body.position.x = spike.body.position.x + (spike.body.width/2) - (new_monster.body.width/2);
+			new_monster.body.immovable = true;
+			monsters.push([new_monster, spike]);
 		}
 		return spikes
 	}
@@ -209,8 +236,16 @@ function update() {
 		ground.shift();
 	}
 
-	if (spaceKey.isDown && player.body.touching.down && hitPlatform) {
+	// Delete bullets:
+	if (bullets.length > 0 &&
+		bullets[0].body.position.x > game.world.width) {
+		bullets[0].kill();
+		bullets.shift();
+	}
+
+	if (spaceKey.isDown && player.body.touching.down) {
 		player.body.velocity.y = -jumpPower;
+		player.body.velocity.y -= 100;
 	} else if (player.body.velocity.y < 0 && spaceKey.isUp) {
 		player.body.velocity.y += 100;
 	}
@@ -254,6 +289,11 @@ function switchOnLedges() {
 	redGround = !redGround;
 }
 
+function shootBullet() {
+	bullet = projectiles.create(player.body.position.x + player.body.width, player.body.position.y + (player.body.height/2), 'bullet');
+	bullet.body.immovable = true;
+	bullets.push(bullet)
+}
 </script>
 
 </body>
