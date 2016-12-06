@@ -36,6 +36,7 @@ function preload() {
 
 var platforms;
 var deadly;
+var creatures;
 var projectiles;
 var ground = [];
 var clouds = [];
@@ -76,6 +77,9 @@ function create() {
 	deadly = game.add.group();
 	deadly.enableBody = true;
 
+	creatures = game.add.group();
+	creatures.enableBody = true;
+
 	projectiles = game.add.group();
 	projectiles.enableBody = true;
 
@@ -89,15 +93,20 @@ function create() {
 
 	cursors = game.input.keyboard.createCursorKeys();
 	spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-
 	keyK = game.input.keyboard.addKey(Phaser.Keyboard.K);
-    keyK.onDown.add(switchOnLedges, this);
+    keyK.onDown.add(toggleLedges, this);
     keyD = game.input.keyboard.addKey(Phaser.Keyboard.D);
     keyD.onDown.add(shootBullet, this);
 
 }
 
 function update() {
+
+	/* The passing objects are moving, the player stays in the same position,
+	unless he's hit by some object */
+
+	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// UPDATE THINGS
 
 	ground.forEach(function(groundPiece) {
 		groundPiece.body.velocity.x = -vel;
@@ -115,18 +124,17 @@ function update() {
 		ledge.body.velocity.x = -vel;
 	})
 
-	// Update monsters:
 	monsters.forEach(function(monster_arr) {
 		monster_arr[0].body.position.x = monster_arr[1].body.position.x;
 	})
 
-	//update bullets
 	bullets.forEach(function(bullet) {
 		bullet.body.velocity.x = vel * 2;
 	})
+	//-----------------------------------------------------------------
 
-	hitPlatform = game.physics.arcade.collide(player, platforms);
-	hitSpike = game.physics.arcade.collide(player, deadly);
+	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// CREATE THINGS
 
 	function new_ground_piece() {
 		if (!redGround) {
@@ -141,7 +149,7 @@ function update() {
 
 	}
 
-	function new_spikes() {
+	function create_spikes() {
 		spikes = []
 		numberOfSpikes = Math.ceil(Math.random() * 3);
 		last_spike_x = 0;
@@ -153,7 +161,7 @@ function update() {
 			spike.body.friction.x = 0;
 			spikes.push(spike);
 			//create a monster:
-			new_monster = deadly.create(spike.body.position.x, spike.body.position.y - 50, 'monster');
+			new_monster = creatures.create(spike.body.position.x, spike.body.position.y - 50, 'monster');
 			new_monster.scale.setTo(2, 2);
 			new_monster.body.position.x = spike.body.position.x + (spike.body.width/2) - (new_monster.body.width/2);
 			new_monster.body.immovable = true;
@@ -179,9 +187,15 @@ function update() {
 		ledge.body.friction.x = 0;
 		return ledge;
 	}
+	//---------------------------------------------------------------------------
+
+	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// CONDITIONALS
+
+
+	// Create things:
 
 	last_ledge = ledges[ledges.length - 1]
-
 	if (ledgesOn &&
 		ledges.length == 0) {
 		ledges.push(platforms.create(game.world.width,
@@ -195,28 +209,32 @@ function update() {
 		ledges.push(new_ledge(last_ledge));
 	}
 
+	last_spike = spikes[spikes.length - 1];
+	if (spikesOn &&
+		spikes.length == 0) {
+		new_spikes_arr = create_spikes();
+		new_spikes_arr.forEach(function(spike) {
+			spikes.push(spike);
+		})
+	} else if (spikesOn &&
+		last_spike.body.position.x < game.world.width/2) {
+		new_spikes_arr = create_spikes();
+		new_spikes_arr.forEach(function(spike) {
+			spikes.push(spike);
+		})
+	}
+
+	last_ground_piece = ground[ground.length -1];
+	if (last_ground_piece.body.position.x < game.world.width - last_ground_piece.body.width + 10) {
+		new_ground_piece();
+	}
+
+	// Delete things (when they are off the screen, etc)
+
 	if (ledges.length > 0 &&
 		ledges[0].body.position.x < -ledges[0].body.width) {
 		ledges[0].kill()
 		ledges.shift();
-	}
-
-	last_spike = spikes[spikes.length - 1];
-
-	if (spikesOn &&
-		spikes.length == 0) {
-		spikes.push(platforms.create(game.world.width,
-			game.world.height - 164 - 64,
-			'spike'));
-		spikes[0].scale.setTo(1, 1)
-		spikes[0].body.immovable = true;
-		spikes[0].body.friction.x = 0;
-	} else if (spikesOn &&
-		last_spike.body.position.x < game.world.width/2) {
-		new_spikes_arr = new_spikes();
-		new_spikes_arr.forEach(function(spike) {
-			spikes.push(spike);
-		})
 	}
 
 	if (spikes.length > 0 &&
@@ -225,23 +243,40 @@ function update() {
 		spikes.shift();
 	}
 
-	last_ground_piece = ground[ground.length -1];
-
-	if (last_ground_piece.body.position.x < game.world.width - last_ground_piece.body.width + 10) {
-		new_ground_piece();
-	}
-
 	if (ground[0].body.position.x < -ground[0].body.width) {
 		ground[0].kill();
 		ground.shift();
 	}
 
-	// Delete bullets:
 	if (bullets.length > 0 &&
 		bullets[0].body.position.x > game.world.width) {
 		bullets[0].kill();
 		bullets.shift();
 	}
+
+	// Check for collisions with platforms and spikes:
+	hitPlatform = game.physics.arcade.collide(player, platforms);
+	hitSpike = game.physics.arcade.collide(player, deadly);
+
+	bulletsToRemove = [];
+	monstersToRemove = [];
+	bullets.forEach(function(bullet, bull_ind) {
+		monsters.forEach(function(monster, monst_ind) {
+			hitMonster = game.physics.arcade.collide(bullet, monster);
+			if (hitMonster) {
+				bullet.kill();
+				bulletsToRemove.push(bull_ind);
+				monster[0].kill();
+				monstersToRemove.push(monst_ind);
+			}
+		})
+	})
+	bulletsToRemove.forEach(function(ind) {
+		bullets.splice(ind, 1);
+	})
+	monstersToRemove.forEach(function(ind) {
+		monsters.splice(ind, 1);
+	})
 
 	if (spaceKey.isDown && player.body.touching.down) {
 		player.body.velocity.y = -jumpPower;
@@ -270,8 +305,6 @@ function update() {
 		game.camera.y = 0;
 	}
 
-	player.animations.play('right');
-
 	if (game.input.activePointer.withinGame)
     {
         game.input.enabled = true;
@@ -280,10 +313,13 @@ function update() {
     {
         game.input.enabled = false;
     }
+    // ------------------------------------------------------------------------
+
+	player.animations.play('right');
 
 }
 
-function switchOnLedges() {
+function toggleLedges() {
 	ledgesOn = !ledgesOn;
 	spikesOn = !spikesOn;
 	redGround = !redGround;
