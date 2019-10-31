@@ -1,9 +1,38 @@
 * {
 	margin: 0;
 	padding: 0;
-	font: Palatino;
+	font-family: "Palatino Linotype", serif;
+	font-weight: normal;
 }
 
 body  {
-	background: #046770;
+	background: #001316;
+	color: #afafaf;
+	font-size: 1.4em;
+	margin: 0.2em 2em;
+}
+
+h1, h2 {
+	color: #f77647;
+}
+
+h2 {
+	margin: 0.4em 0 0.2em;
+}
+
+.text-block {
+	margin-bottom: 2em;
+	line-height: 1.7em;
+}
+
+p {
+	margin: 0.7em 0;
+}
+
+ul {
+	margin: 0 1.5em;
+}
+
+a {
+	color: #6edee8;
 }
