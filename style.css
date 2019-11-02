@@ -1,0 +1,60 @@
+* {
+	margin: 0;
+	padding: 0;
+	font-family: "Palatino Linotype", serif;
+	font-weight: normal;
+}
+
+
+html {
+	width: 100%;
+}
+
+body  {
+	background: #001316;
+	color: #afafaf;
+	font-size: 3em;
+	width: 100%;
+	padding: 0.3em;
+
+	box-sizing: border-box;
+}
+
+h1, h2 {
+	color: #f77647;
+}
+
+h1 {
+	font-size: 2.5em;
+	text-decoration: underline;
+}
+
+h2 {
+	margin: 0.4em 0 0.2em;
+}
+
+.text-block {
+	margin-bottom: 2em;
+	line-height: 1.8em;
+}
+
+p {
+	margin: 0.9em 0;
+}
+
+ul {
+	margin: 0 1.5em;
+}
+
+a {
+	color: #6edee8;
+}
+
+@media only screen 
+  and (min-device-width: 768px) 
+  and (-webkit-min-device-pixel-ratio: 1) {
+  	body {
+  		font-size: 1.6em;
+  		padding: 1em 7em;
+  	}
+  }
