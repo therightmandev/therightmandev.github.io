@@ -46,6 +46,10 @@ ul {
 	margin: 0 1.5em;
 }
 
+a.header {
+  color: inherit;
+}
+
 a {
 	color: #6edee8;
 }
