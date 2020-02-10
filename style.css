@@ -54,6 +54,11 @@ a {
 	color: #6edee8;
 }
 
+#updated {
+  font-size: 0.6em;
+  font-style: italic;
+}
+
 @media only screen 
   and (min-device-width: 768px) 
   and (-webkit-min-device-pixel-ratio: 1) {
